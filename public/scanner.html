@@ -1,0 +1,131 @@
+<!doctype html>
+<html lang="en">
+
+<head>
+    <meta charset="utf-8" />
+    <title>DeepDetector | Scanner</title>
+    <link rel="stylesheet" href="style.css" />
+</head>
+
+<body>
+    <header class="navbar">
+        <div class="logo">
+            <img src="assets/logo.png" alt="DeepDetector Logo" />
+            <span>DeepDetector</span>
+        </div>
+        <nav>
+            <a href="/">home</a>
+            <a href="/vault">hash vault</a>
+            <a href="/scanner" class="active">scanner</a>
+        </nav>
+    </header>
+
+    <main class="scanner-page">
+        <!-- single upload -->
+        <section class="single-hash">
+            <h1>Hash Your Content</h1>
+            <hr class="divider" />
+            <div class="scanner-grid">
+                <div class="upload-box" id="singleUploadBox">
+                    <input type="file" id="singleFile" accept="image/*" hidden />
+                    <p>Upload Content</p>
+                    <span class="upload-icon">⬆️</span>
+                </div>
+                <div class="hash-info">
+                    <p class="hash-description">
+                        Generate a secure SHA-256 hash for your image or file to ensure authenticity.
+                    </p>
+                    <h3>Your Hash Output <span class="tag">SHA-256</span></h3>
+                    <p id="hashResult" class="hash-output">Upload a file to generate hash...</p>
+                </div>
+            </div>
+        </section>
+
+        <!-- comparison -->
+        <section class="comparison-section">
+            <h2>Compare Hash Values</h2>
+            <hr class="divider" />
+            <form action="/compare" method="post" enctype="multipart/form-data" class="compare-form">
+                <div class="upload-row">
+                    <div class="upload-box">
+                        <p>Image 1</p>
+                        <input type="file" name="images" accept="image/*" required />
+                    </div>
+                    <div class="upload-box">
+                        <p>Image 2</p>
+                        <input type="file" name="images" accept="image/*" required />
+                    </div>
+                </div>
+                <button id="compareBtn" type="submit">Compare</button>
+            </form>
+
+            <div id="compareResult" class="compare-result hidden">
+                <p id="resultText"></p>
+            </div>
+        </section>
+    </main>
+
+    <footer class="footer">
+        <a href="/figma" class="footer-link">view figma →</a>
+    </footer>
+
+    <script>
+        // --- handle single file upload & hash ---
+        const uploadBox = document.getElementById("singleUploadBox");
+        const fileInput = document.getElementById("singleFile");
+        const hashResult = document.getElementById("hashResult");
+
+        uploadBox.addEventListener("click", () => fileInput.click());
+
+        fileInput.addEventListener("change", async (e) => {
+            const file = e.target.files[0];
+            if (!file) return;
+
+            hashResult.textContent = "Calculating hash...";
+            const arrayBuffer = await file.arrayBuffer();
+            const hashBuffer = await crypto.subtle.digest("SHA-256", arrayBuffer);
+            const hashArray = Array.from(new Uint8Array(hashBuffer));
+            const hashHex = hashArray.map(b => b.toString(16).padStart(2, "0")).join("");
+            hashResult.textContent = hashHex;
+
+            // --- upload to db ---
+            const formData = new FormData();
+            formData.append("image", file);
+            formData.append("hash", hashHex);
+
+            try {
+                const response = await fetch("/upload-hash", {
+                    method: "POST",
+                    body: formData
+                });
+
+                if (response.ok) {
+                    console.log("✅ File uploaded to DB successfully.");
+                } else {
+                    console.error("❌ Upload failed.");
+                }
+            } catch (err) {
+                console.error("⚠️ Upload error:", err);
+            }
+        });
+
+        // --- visual compare result ---
+        const form = document.querySelector(".compare-form");
+        const compareResult = document.getElementById("compareResult");
+        const resultText = document.getElementById("resultText");
+
+        form.addEventListener("submit", async (e) => {
+            e.preventDefault();
+
+            const formData = new FormData(form);
+            const res = await fetch("/compare", { method: "POST", body: formData });
+            const data = await res.json();
+
+            compareResult.classList.remove("hidden");
+            resultText.textContent = data.match ? "✅ Hashes Match" : "❌ No Match";
+            resultText.style.color = data.match ? "#00ff88" : "#ff4444";
+        });
+    </script>
+</body>
+
+</html>

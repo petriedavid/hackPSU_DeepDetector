@@ -1,0 +1,80 @@
+<!doctype html>
+<html lang="en">
+
+<head>
+    <meta charset="utf-8" />
+    <title>hashbank | history</title>
+    <link rel="stylesheet" href="style.css" />
+    <style>
+        table {
+            margin-top: 40px;
+            border-collapse: collapse;
+            width: 90%;
+        }
+
+        th,
+        td {
+            border-bottom: 1px solid #333;
+            padding: 10px;
+            font-size: 0.9rem;
+        }
+
+        th {
+            color: #0ff;
+            text-transform: lowercase;
+            letter-spacing: 1px;
+        }
+
+        tr:hover {
+            background: #1a1a1a;
+        }
+
+        .match-yes {
+            color: #0f0;
+        }
+
+        .match-no {
+            color: #f33;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="container">
+        <h1>🧩 hash history</h1>
+        <a href="/" class="link">← back to upload</a>
+
+        <table>
+            <thead>
+                <tr>
+                    <th>id</th>
+                    <th>file 1 hash</th>
+                    <th>file 2 hash</th>
+                    <th>match?</th>
+                    <th>timestamp</th>
+                </tr>
+            </thead>
+            <tbody id="historytable"></tbody>
+        </table>
+    </div>
+
+    <script>
+        async function loadhistory() {
+            const res = await fetch("/api/history");
+            const data = await res.json();
+            const tbody = document.getElementById("historytable");
+            tbody.innerHTML = data.map(r => `
+        <tr>
+          <td>${r.id}</td>
+          <td>${r.file1_hash.slice(0, 24)}...</td>
+          <td>${r.file2_hash.slice(0, 24)}...</td>
+          <td class="${r.match ? 'match-yes' : 'match-no'}">${r.match ? '✔' : '✘'}</td>
+          <td>${new Date(r.created_at).toLocaleString()}</td>
+        </tr>
+      `).join("");
+        }
+        loadhistory();
+    </script>
+</body>
+
+</html>
