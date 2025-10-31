@@ -367,7 +367,7 @@ nav a:hover {
     background: linear-gradient(to bottom, #1a1a1a, #0a0a0a);
 }
 
-.footer-link {
+.footer-link { 
     color: #ccc;
     font-size: 0.85rem;
     text-decoration: none;
