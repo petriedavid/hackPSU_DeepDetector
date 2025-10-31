@@ -41,3 +41,4 @@ import fs from "fs";
     console.log("✅ hashbank.db created with 3 sample rows.");
     await db.close();
 })();
+ 
